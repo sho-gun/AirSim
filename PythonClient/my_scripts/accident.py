@@ -11,18 +11,18 @@ import time
 # Use below in settings.json with blocks environment
 """
 {
-	"SettingsVersion": 1.2,
-	"SimMode": "Car",
+    "SettingsVersion": 1.2,
+    "SimMode": "Car",
 
-	"Vehicles": {
-		"Car1": {
-		  "VehicleType": "PhysXCar",
-		  "X": 4, "Y": 0, "Z": -2
-		},
-		"Car2": {
-		  "VehicleType": "PhysXCar",
-		  "X": -4, "Y": 0, "Z": -2
-		}
+    "Vehicles": {
+        "Car1": {
+          "VehicleType": "PhysXCar",
+          "X": 4, "Y": 0, "Z": -2
+        },
+        "Car2": {
+          "VehicleType": "PhysXCar",
+          "X": -4, "Y": 0, "Z": -2
+        }
 
     }
 }
@@ -32,42 +32,51 @@ class AirSimClient:
     _instance = None
     _client = None
 
-    def __init__(self):
-        if self._client is None:
-            # connect to the AirSim simulator
-            self._client = airsim.CarClient()
-            self._client.confirmConnection()
-
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
 
         return cls._instance
 
+    def __init__(self):
+        if self._client is None:
+            # connect to the AirSim simulator
+            self._client = airsim.CarClient()
+            self._client.confirmConnection()
+
+    def enableApiControl(self, flag, name):
+        self._client.enableApiControl(flag, name)
+
+    def getCarState(self, name):
+        return self._client.getCarState(name)
+
+    def setCarControls(self, controls, name):
+        self._client.setCarControls(controls, name)
+
 class AirSimCarControl:
     def __init__(self, name):
         self.client = AirSimClient()
         self.name = name
         self.client.enableApiControl(True, name)
-        self.control = airsim.CarControls()
+        self.controls = airsim.CarControls()
 
     def printCarState(self):
         state = self.client.getCarState(self.name)
         print('%s: Speed %d, Gear %d' % (self.name, state.speed, state.gear))
 
     def control(self, throttle=0, steering=0, brake=0, manual_gear=None):
-        self.control.throttle = throttle
-        self.control.steering = steering
-        self.control.brake = brake
+        self.controls.throttle = throttle
+        self.controls.steering = steering
+        self.controls.brake = brake
 
         if manual_gear is None:
-            self.control.is_manual_gear = False
-            self.control.manual_gear = 0
+            self.controls.is_manual_gear = False
+            self.controls.manual_gear = 0
         else:
-            self.control.is_manual_gear = True
-            self.control.manual_gear = manual_gear
+            self.controls.is_manual_gear = True
+            self.controls.manual_gear = manual_gear
 
-        self.client.setCarControls(self.control, self.name)
+        self.client.setCarControls(self.controls, self.name)
 
 
 def main():
@@ -80,10 +89,10 @@ def main():
         car2.printCarState()
 
         # Just go forward
-        car1.control(throttle=1)
-        car2.control(throttle=1)
+        car1.control(throttle=5)
+        car2.control(throttle=5)
 
-        time.sleep(3)
+        time.sleep(1)
 
 if __name__ == '__main__':
     main()
