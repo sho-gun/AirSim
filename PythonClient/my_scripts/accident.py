@@ -84,3 +84,6 @@ def main():
         car2.control(throttle=1)
 
         time.sleep(3)
+
+if __name__ == '__main__':
+    main()
