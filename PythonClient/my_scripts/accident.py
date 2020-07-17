@@ -1,0 +1,86 @@
+import airsim
+import cv2
+import numpy as np
+import os
+import setup_path
+import time
+
+# AirSim API Documentation
+# https://microsoft.github.io/AirSim/apis/#vehicle-specific-apis
+
+# Use below in settings.json with blocks environment
+"""
+{
+	"SettingsVersion": 1.2,
+	"SimMode": "Car",
+
+	"Vehicles": {
+		"Car1": {
+		  "VehicleType": "PhysXCar",
+		  "X": 4, "Y": 0, "Z": -2
+		},
+		"Car2": {
+		  "VehicleType": "PhysXCar",
+		  "X": -4, "Y": 0, "Z": -2
+		}
+
+    }
+}
+"""
+
+class AirSimClient:
+    _instance = None
+    _client = None
+
+    def __init__(self):
+        if self._client is None:
+            # connect to the AirSim simulator
+            self._client = airsim.CarClient()
+            self._client.confirmConnection()
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+
+        return cls._instance
+
+class AirSimCarControl:
+    def __init__(self, name):
+        self.client = AirSimClient()
+        self.name = name
+        self.client.enableApiControl(True, name)
+        self.control = airsim.CarControls()
+
+    def printCarState(self):
+        state = self.client.getCarState(self.name)
+        print('%s: Speed %d, Gear %d' % (self.name, state.speed, state.gear))
+
+    def control(self, throttle=0, steering=0, brake=0, manual_gear=None):
+        self.control.throttle = throttle
+        self.control.steering = steering
+        self.control.brake = brake
+
+        if manual_gear is None:
+            self.control.is_manual_gear = False
+            self.control.manual_gear = 0
+        else:
+            self.control.is_manual_gear = True
+            self.control.manual_gear = manual_gear
+
+        self.client.setCarControls(self.control, self.name)
+
+
+def main():
+    car1 = AirSimCarControl('Car1')
+    car2 = AirSimCarControl('Car2')
+
+    while True:
+        # Print state of the car
+        car1.printCarState()
+        car2.printCarState()
+
+        # Just go forward
+        car1.control(throttle=1)
+        car2.control(throttle=1)
+
+        time.sleep(3)
