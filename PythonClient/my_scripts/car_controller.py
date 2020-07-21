@@ -81,9 +81,9 @@ class AirSimCarControl:
 
         self.client.setCarControls(self.controls, self.name)
 
-    def saveImage(self, name):
+    def saveImage(self, name, save_path):
         image = self.client.simGetImage(name, airsim.ImageType.Scene)
-        with open('hoge.png', 'wb') as output:
+        with open(save_path, 'wb') as output:
             output.write(image)
 
 

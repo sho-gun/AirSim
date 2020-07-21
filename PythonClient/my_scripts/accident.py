@@ -35,7 +35,7 @@ def main():
         car2.control(throttle=10)
 
         # get image
-        car1.saveImage('0')
+        car1.saveImage('0', 'hoge.png')
 
         time.sleep(1)
 
