@@ -1,12 +1,5 @@
-import airsim
-import cv2
-import numpy as np
-import os
-import setup_path
 import time
-
-# AirSim API Documentation
-# https://microsoft.github.io/AirSim/apis/#vehicle-specific-apis
+from car_controller import AirSimCarControl
 
 # Use below in settings.json with blocks environment
 """
@@ -28,57 +21,6 @@ import time
 }
 """
 
-class AirSimClient:
-    _instance = None
-    _client = None
-
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-
-        return cls._instance
-
-    def __init__(self):
-        if self._client is None:
-            # connect to the AirSim simulator
-            self._client = airsim.CarClient()
-            self._client.confirmConnection()
-
-    def enableApiControl(self, flag, name):
-        self._client.enableApiControl(flag, name)
-
-    def getCarState(self, name):
-        return self._client.getCarState(name)
-
-    def setCarControls(self, controls, name):
-        self._client.setCarControls(controls, name)
-
-class AirSimCarControl:
-    def __init__(self, name):
-        self.client = AirSimClient()
-        self.name = name
-        self.client.enableApiControl(True, name)
-        self.controls = airsim.CarControls()
-
-    def printCarState(self):
-        state = self.client.getCarState(self.name)
-        print('%s: Speed %d, Gear %d' % (self.name, state.speed, state.gear))
-
-    def control(self, throttle=0, steering=0, brake=0, manual_gear=None):
-        self.controls.throttle = throttle
-        self.controls.steering = steering
-        self.controls.brake = brake
-
-        if manual_gear is None:
-            self.controls.is_manual_gear = False
-            self.controls.manual_gear = 0
-        else:
-            self.controls.is_manual_gear = True
-            self.controls.manual_gear = manual_gear
-
-        self.client.setCarControls(self.controls, self.name)
-
-
 def main():
     car1 = AirSimCarControl('Car1')
     car2 = AirSimCarControl('Car2')
@@ -89,8 +31,11 @@ def main():
         car2.printCarState()
 
         # Just go forward
-        car1.control(throttle=5)
-        car2.control(throttle=5)
+        car1.control(throttle=10)
+        car2.control(throttle=10)
+
+        # get image
+        car1.saveImage('0')
 
         time.sleep(1)
 
