@@ -1,3 +1,4 @@
+import os
 import time
 from car_controller import AirSimCarControl
 
@@ -22,6 +23,9 @@ from car_controller import AirSimCarControl
 """
 
 def main():
+    os.makedirs('captured_images', exist_ok=True)
+    idx = 0
+
     car1 = AirSimCarControl('Car1')
     car2 = AirSimCarControl('Car2')
 
@@ -35,7 +39,8 @@ def main():
         car2.control(throttle=10)
 
         # get image
-        car1.saveImage('0', 'hoge.png')
+        car1.saveImage('MyCamera1', os.path.join('captured_images', '{}.png'.format(idx)))
+        idx += 1
 
         time.sleep(1)
 

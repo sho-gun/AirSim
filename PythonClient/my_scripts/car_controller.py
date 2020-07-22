@@ -4,6 +4,7 @@ import numpy as np
 import os
 import setup_path
 import time
+from fisheye_effector import FisheyeEffector
 
 # AirSim API Documentation
 # https://microsoft.github.io/AirSim/apis/#vehicle-specific-apis
@@ -62,6 +63,7 @@ class AirSimCarControl:
         self.name = name
         self.client.enableApiControl(True, name)
         self.controls = airsim.CarControls()
+        self.effector = FisheyeEffector(distortion=0.3)
 
     def printCarState(self):
         state = self.client.getCarState(self.name)
@@ -83,6 +85,7 @@ class AirSimCarControl:
 
     def saveImage(self, name, save_path):
         image = self.client.simGetImage(name, airsim.ImageType.Scene)
+        image = self.effector.apply(image)
         with open(save_path, 'wb') as output:
             output.write(image)
 
