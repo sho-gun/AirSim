@@ -1,4 +1,6 @@
 import io
+import os
+import sys
 import numpy as np
 from PIL import Image
 from math import sqrt
@@ -39,3 +41,24 @@ def calc_points_of_original_image(x, y, r, distortion):
         return x, y
 
     return x / (1 - distortion*(r**2)), y / (1 - distortion*(r**2))
+
+if __name__ == '__main__':
+    args = sys.argv
+    if len(args) < 2:
+        print('Specify input image filename.')
+        exit()
+
+    file_path = args[1]
+    if not os.path.exists(file_path):
+        print('No such file or directory.')
+        exit()
+    if os.path.isdir(file_path):
+        print('Specified path is a directory.')
+        exit()
+
+    effector = FisheyeEffector(distortion = -0.1)
+
+    with open(file_path, 'rb') as image_bin:
+        output = open('output.png', 'wb')
+        output.write(effector.apply(image_bin.read()))
+        output.close()
