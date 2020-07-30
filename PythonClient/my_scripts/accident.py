@@ -82,7 +82,7 @@ def main():
         car2.printCarState()
 
         # Just go forward
-        car1.control(throttle=10)
+        car1.control(throttle=10, steering=4)
         car2.control(throttle=10)
 
         # get image
