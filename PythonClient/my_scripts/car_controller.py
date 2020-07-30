@@ -4,7 +4,9 @@ import numpy as np
 import os
 import setup_path
 import time
+import math
 from fisheye_effector import FisheyeEffector
+from threading import Thread
 
 # AirSim API Documentation
 # https://microsoft.github.io/AirSim/apis/#vehicle-specific-apis
@@ -63,11 +65,19 @@ class AirSimCarControl:
         self.name = name
         self.client.enableApiControl(True, name)
         self.controls = airsim.CarControls()
-        self.effector = FisheyeEffector(distortion=0.3)
+        # self.effector = FisheyeEffector(distortion=0.1)
 
     def printCarState(self):
         state = self.client.getCarState(self.name)
-        print('%s: Speed %d, Gear %d' % (self.name, state.speed, state.gear))
+        position = state.kinematics_estimated.position
+        quaternion = state.kinematics_estimated.orientation
+        orientation = calcCarOrientation(
+            quaternion.w_val,
+            quaternion.x_val,
+            quaternion.y_val,
+            quaternion.z_val
+        )
+        print('%s: Speed %d, Gear %d, Orientation %d' % (self.name, state.speed, state.gear, orientation))
 
     def control(self, throttle=0, steering=0, brake=0, gear=None):
         self.controls.throttle = throttle
@@ -85,10 +95,17 @@ class AirSimCarControl:
 
     def saveImage(self, name, save_path):
         image = self.client.simGetImage(name, airsim.ImageType.Scene)
-        image = self.effector.apply(image)
+        # image = self.effector.apply(image)
+        Thread(target=self.threadedSaveImage, args=(image, save_path)).start()
+
+    def threadedSaveImage(self, image, save_path):
+        # image = self.effector.apply(image)
         with open(save_path, 'wb') as output:
             output.write(image)
 
+def calcCarOrientation(w, x, y, z):
+    print(w, x, y, z)
+    return 0
 
 def main():
     car1 = AirSimCarControl('Car1')

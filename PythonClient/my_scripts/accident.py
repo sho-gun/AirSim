@@ -5,19 +5,66 @@ from car_controller import AirSimCarControl
 # Use below in settings.json with blocks environment
 """
 {
-    "SettingsVersion": 1.2,
-    "SimMode": "Car",
+  "SettingsVersion": 1.2,
+  "Recording": {
+    "RecordOnMove": false,
+    "RecordInterval": 0.1,
+    "Cameras": [
+        { "CameraName": "MyCamera1", "ImageType": 0, "PixelsAsFloat": false, "Compress": true }
+    ]
+  },
+  "CameraDefaults": {
+    "CaptureSettings": [
+      {
+        "ImageType": 0,
+        "Width": 1280,
+        "Height": 720,
+        "FOV_Degrees": 120,
+        "AutoExposureSpeed": 100,
+        "MotionBlurAmount": 0,
+        "AutoExposureMinBrightness": 300
+      }
+    ]
+  },
+  "SubWindows": [
+    {"WindowID": 1, "CameraName": "MyCamera1", "ImageType": 0, "Visible": true}
+  ],
 
-    "Vehicles": {
-        "Car1": {
-          "VehicleType": "PhysXCar",
-          "X": 4, "Y": 0, "Z": -2
+  "SimMode": "Car",
+  "Vehicles": {
+      "Car1": {
+        "VehicleType": "PhysXCar",
+        "Cameras": {
+          "MyCamera1": {
+            "CaptureSettings": [
+              {
+                  "ImageType": 0,
+                  "Width": 640,
+                  "Height": 360,
+                  "FOV_Degrees": 120,
+                  "AutoExposureSpeed": 100,
+                  "MotionBlurAmount": 0,
+                  "AutoExposureMinBrightness": 300
+              }
+            ],
+            "NoiseSettings": [
+              {
+                "Enabled": false,
+                "ImageType": 0
+              }
+            ],
+            "X": 0.7, "Y": 0, "Z": -1.55,
+            "Pitch": 0.3, "Roll": 0, "Yaw": 0
+          }
         },
-        "Car2": {
-          "VehicleType": "PhysXCar",
-          "X": -4, "Y": 0, "Z": -2
-        }
-
+        "X": 0, "Y": 0, "Z": 0,
+        "Yaw": 0
+      },
+      "Car2": {
+        "VehicleType": "PhysXCar",
+        "X": 10, "Y": 3.5, "Z": 0,
+        "Yaw": 180
+      }
     }
 }
 """

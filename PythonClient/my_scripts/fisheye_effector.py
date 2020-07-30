@@ -8,8 +8,11 @@ from math import sqrt
 class FisheyeEffector:
     def __init__(self, height=720, width=1280, distortion=0.5):
         float_height, float_width = float(height), float(width)
+        self.height, self.width = height, width
 
         self.filter = np.full((height, width, 2), -1)
+        self.crop = True if distortion > 0 else False
+        self.left, self.upper, self.right, self.lower = 0, 0, width, height
 
         for h in range(height):
             for w in range(width):
@@ -21,6 +24,11 @@ class FisheyeEffector:
                 if org_h in range(height) and org_w in range(width):
                     self.filter[h][w] = [org_h, org_w]
 
+                    if org_h == 0 and org_w == 0:
+                        self.left, self.upper = w, h
+                    if org_h >= height - 2 and org_w >= width - 2:
+                        self.right, self.lower = w, h
+
     def apply(self, image_bytes):
         image = np.array(Image.open(io.BytesIO(image_bytes)))
         fish_image = np.zeros_like(image)
@@ -31,8 +39,13 @@ class FisheyeEffector:
                 if org_h >= 0 and org_w >= 0:
                     fish_image[h][w] = image[org_h][org_w]
 
+        fish_image = Image.fromarray(fish_image)
+        if self.crop:
+            fish_image = fish_image.crop((self.left, self.upper, self.right, self.lower))
+            fish_image = fish_image.resize((self.width, self.height), Image.LANCZOS)
+
         fish_image_bytes = io.BytesIO()
-        Image.fromarray(fish_image).save(fish_image_bytes, 'png')
+        fish_image.save(fish_image_bytes, 'png')
 
         return fish_image_bytes.getvalue()
 
