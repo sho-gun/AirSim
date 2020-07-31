@@ -1,3 +1,4 @@
+import argparse
 import io
 import os
 import sys
@@ -14,6 +15,7 @@ class FisheyeEffector:
         self.crop = True if distortion > 0 else False
         self.left, self.upper, self.right, self.lower = 0, 0, width, height
 
+        # calculate filter
         for h in range(height):
             for w in range(width):
                 norm_h, norm_w = float((2*h - float_height) / float_height), float((2*w - float_width) / float_width)
@@ -24,15 +26,17 @@ class FisheyeEffector:
                 if org_h in range(height) and org_w in range(width):
                     self.filter[h][w] = [org_h, org_w]
 
-                    if org_h == 0 and org_w == 0:
-                        self.left, self.upper = w, h
-                    if org_h >= height - 2 and org_w >= width - 2:
+                    # remember coordinates for cropping result images
+                    if norm_h - norm_w == 0:
+                        if self.left == 0 and self.upper == 0:
+                            self.left, self.upper = w, h
                         self.right, self.lower = w, h
 
     def apply(self, image_bytes):
         image = np.array(Image.open(io.BytesIO(image_bytes)))
         fish_image = np.zeros_like(image)
 
+        # apply filter
         for h in range(len(fish_image)):
             for w in range(len(fish_image[0])):
                 org_h, org_w = self.filter[h][w]
@@ -50,28 +54,52 @@ class FisheyeEffector:
         return fish_image_bytes.getvalue()
 
 def calc_points_of_original_image(x, y, r, distortion):
+    if distortion > 1:
+        distortion = 1
+    elif distortion < -1:
+        distortion = -1
+
     if 1 - distortion*(r**2) == 0:
         return x, y
 
     return x / (1 - distortion*(r**2)), y / (1 - distortion*(r**2))
 
 if __name__ == '__main__':
-    args = sys.argv
-    if len(args) < 2:
-        print('Specify input image filename.')
-        exit()
+    parser = argparse.ArgumentParser()
 
-    file_path = args[1]
-    if not os.path.exists(file_path):
-        print('No such file or directory.')
-        exit()
-    if os.path.isdir(file_path):
-        print('Specified path is a directory.')
-        exit()
+    parser.add_argument('input', help='path to the input image or directory')
+    parser.add_argument('-d', '--distortion', type=float, default=0.1, help='amount of distortion between -1 to 1 (0.1 as default)')
+    parser.add_argument('--width', type=int, default=1280, help='input image width (1280 as default)')
+    parser.add_argument('--height', type=int, default=720, help='input image height (720 as default)')
 
-    effector = FisheyeEffector(distortion = -0.1)
+    args       = parser.parse_args()
+    input_path = args.input
+    distortion = args.distortion
+    width      = args.width
+    height     = args.height
 
-    with open(file_path, 'rb') as image_bin:
-        output = open('output.png', 'wb')
-        output.write(effector.apply(image_bin.read()))
-        output.close()
+    if not os.path.exists(input_path):
+        print('No such file or directory: {}'.format(input_path))
+        exit(1)
+
+    effector = FisheyeEffector(height=height, width=width, distortion=distortion)
+
+    if os.path.isfile(input_path):
+        with open(input_path, 'rb') as image_bin:
+            output = open('output.png', 'wb')
+            output.write(effector.apply(image_bin.read()))
+            output.close()
+
+    else:
+        output_dir = 'output'
+        os.makedirs(output_dir, exist_ok=True)
+
+        for idx, file in enumerate(os.listdir(input_path)):
+            image_path = os.path.join(input_path, file)
+            output_path = os.path.join(output_dir, str(idx) + '.png')
+
+            if os.path.isfile(image_path):
+                with open(image_path, 'rb') as image_bin:
+                    output = open(output_path, 'wb')
+                    output.write(effector.apply(image_bin.read()))
+                    output.close()
