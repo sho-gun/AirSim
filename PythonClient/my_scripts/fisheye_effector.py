@@ -12,22 +12,27 @@ class FisheyeEffector:
         self.height, self.width = height, width
 
         self.filter = np.full((height, width, 2), -1)
-        self.crop = True if distortion > 0 else False
+        self.crop = distortion > 0
         self.left, self.upper, self.right, self.lower = 0, 0, width, height
 
         # calculate filter
         for h in range(height):
             for w in range(width):
                 norm_h, norm_w = float((2*h - float_height) / float_height), float((2*w - float_width) / float_width)
+                diagonal = norm_h - norm_w == 0
+                norm_h = norm_h * float_height / float_width
+
                 radius = sqrt(norm_h**2 + norm_w**2)
                 org_norm_h, org_norm_w = calc_points_of_original_image(norm_h, norm_w, radius, distortion)
+
+                org_norm_h = org_norm_h * float_width / float_height
                 org_h, org_w = int((org_norm_h + 1) * float_height / 2), int((org_norm_w + 1) * float_width / 2)
 
                 if org_h in range(height) and org_w in range(width):
                     self.filter[h][w] = [org_h, org_w]
 
                     # remember coordinates for cropping result images
-                    if norm_h - norm_w == 0:
+                    if diagonal:
                         if self.left == 0 and self.upper == 0:
                             self.left, self.upper = w, h
                         self.right, self.lower = w, h
