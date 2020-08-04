@@ -151,15 +151,20 @@ class AirSimCarControl:
             output.write(image)
 
 def calcCarOrientation(w, x, y, z):
-    theta = 2 * np.arccos([w])
-    cos = np.cos(theta)
-    sin = np.sin(theta)
+    # theta = 2 * np.arccos([w])
+    # cos = np.cos(theta)
+    # sin = np.sin(theta)
     # print(np.rad2deg(theta))
 
-    orientation_x = cos + np.power(x, 2) * (1 - cos)
-    orientation_y = x * y * (1 - cos) + z * sin
+    # orientation_x = cos + np.power(x, 2) * (1 - cos)
+    # orientation_y = x * y * (1 - cos) + z * sin
     # orientation_z = z * x * (1 - cos) - y * sin
     # print(orientation_x, orientation_y, orientation_z)
+
+    orientation_x = np.round(x**2 - y**2 - z**2 + w**2, decimals=2)
+    orientation_y = np.round(2 * (x*y + z*w), decimals=2)
+    # orientation_z = 2 * (x*z - y*w)
+    # print(orientation_x, orientation_y)
 
     orientation_rad = np.arccos(orientation_x)
     if orientation_y < 0:
