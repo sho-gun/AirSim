@@ -82,14 +82,16 @@ def main():
         car2.printCarState()
 
         # Just go forward
-        car1.control(throttle=10, steering=4)
-        car2.control(throttle=10)
+        # car1.drive(speed=20, orientation=0)
+        car1.goto((-10, -1.75))
+        # car2.drive(speed=20, orientation=180)
+        car2.goto((0, 1.75))
 
         # get image
-        car1.saveImage('MyCamera1', os.path.join('captured_images', '{}.png'.format(idx)))
-        idx += 1
+        # car1.saveImage('MyCamera1', os.path.join('captured_images', '{}.png'.format(idx)))
+        # idx += 1
 
-        time.sleep(1)
+        time.sleep(0.1)
 
 if __name__ == '__main__':
     main()

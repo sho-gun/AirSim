@@ -5,6 +5,7 @@ import os
 import setup_path
 import time
 import math
+import json
 from fisheye_effector import FisheyeEffector
 from threading import Thread
 
@@ -100,6 +101,9 @@ class AirSimClient:
     def getCarState(self, name):
         return self._client.getCarState(name)
 
+    def getGroundTruthState(self, name):
+        return self._client.simGetGroundTruthKinematics(name)
+
     def setCarControls(self, controls, name):
         self._client.setCarControls(controls, name)
 
@@ -112,19 +116,31 @@ class AirSimCarControl:
         self.name = name
         self.client.enableApiControl(True, name)
         self.controls = airsim.CarControls()
+        self.X, self.Y, self.Z = getInitialPosition(name)
         # self.effector = FisheyeEffector(distortion=0.1)
 
     def printCarState(self):
+        speed, gear, _, position, orientation = self.getCarState()
+        print('%s: Speed %f, Gear %d, Orientation %f' % (self.name, speed, gear, orientation))
+        # print('%s: x %f, y %f' % (self.name, position['x'], position['y']))
+
+    def getCarState(self):
         state = self.client.getCarState(self.name)
-        # position = state.kinematics_estimated.position
-        quaternion = state.kinematics_estimated.orientation
+        gtstate = self.client.getGroundTruthState(self.name)
+
+        position = gtstate.position
+        quaternion = gtstate.orientation
+
+        position_dict = {'x': self.X + position.x_val, 'y': self.Y + position.y_val}
+
         orientation = calcCarOrientation(
             quaternion.w_val,
             quaternion.x_val,
             quaternion.y_val,
             quaternion.z_val
         )
-        print('%s: Speed %d, Gear %d, Orientation %d' % (self.name, state.speed, state.gear, orientation))
+
+        return state.speed, state.gear, state.handbrake, position_dict, orientation
 
     def control(self, throttle=0, steering=0, brake=0, gear=None):
         self.controls.throttle = throttle
@@ -150,21 +166,67 @@ class AirSimCarControl:
         with open(save_path, 'wb') as output:
             output.write(image)
 
+    def drive(self, speed=20.0, orientation=0.0):
+        current_speed, _, _, _, current_orientation = self.getCarState()
+
+        throttle = speed - current_speed
+        if throttle < 0:
+            throttle = 0
+
+        orientation_diff = orientation - current_orientation
+        if orientation_diff > 180:
+            orientation_diff -= 360
+        elif orientation_diff < -180:
+            orientation_diff += 360
+
+        self.control(throttle=throttle, steering=orientation_diff*0.05)
+
+    def goto(self, point, speed=20.0):
+        x, y = point
+        current_speed, _, _, current_position, current_orientation = self.getCarState()
+
+        vector_x = x - current_position['x']
+        vector_y = y - current_position['y']
+
+        distance = abs(math.sqrt(vector_x**2 + vector_y**2))
+        norm_vec_x = vector_x / distance
+
+        target_speed = distance
+        if target_speed > speed:
+            target_speed = speed
+
+        target_orientation_rad = np.arccos(norm_vec_x)
+        if vector_y < 0:
+            target_orientation_rad = 2 * np.pi - target_orientation_rad
+        target_orientation = np.rad2deg(target_orientation_rad)
+
+        if distance <= 3 and current_speed < 1:
+            self.control(brake=1)
+        elif distance > 0.1 * current_speed**2:
+            self.drive(speed=target_speed, orientation=target_orientation)
+        else:
+            self.control(brake=1)
+
+def getInitialPosition(name):
+    settings_path = os.path.join(os.path.expanduser('~'), 'Documents', 'AirSim', 'settings.json')
+    x, y, z = 0, 0, 0
+
+    with open(settings_path, 'r') as f:
+        settings_dict = json.load(f)
+        x = settings_dict['Vehicles'][name]['X']
+        y = settings_dict['Vehicles'][name]['Y']
+        z = settings_dict['Vehicles'][name]['Z']
+
+    return x, y, z
+
 def calcCarOrientation(w, x, y, z):
-    # theta = 2 * np.arccos([w])
-    # cos = np.cos(theta)
-    # sin = np.sin(theta)
-    # print(np.rad2deg(theta))
+    orientation_x = x**2 - y**2 - z**2 + w**2
+    orientation_y = 2 * (x*y + z*w)
 
-    # orientation_x = cos + np.power(x, 2) * (1 - cos)
-    # orientation_y = x * y * (1 - cos) + z * sin
-    # orientation_z = z * x * (1 - cos) - y * sin
-    # print(orientation_x, orientation_y, orientation_z)
-
-    orientation_x = np.round(x**2 - y**2 - z**2 + w**2, decimals=2)
-    orientation_y = np.round(2 * (x*y + z*w), decimals=2)
-    # orientation_z = 2 * (x*z - y*w)
-    # print(orientation_x, orientation_y)
+    if orientation_x > 1:
+        orientation_x = 1
+    elif orientation_x < -1:
+        orientation_x = -1
 
     orientation_rad = np.arccos(orientation_x)
     if orientation_y < 0:
