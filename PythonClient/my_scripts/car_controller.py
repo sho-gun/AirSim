@@ -181,7 +181,7 @@ class AirSimCarControl:
 
         self.control(throttle=throttle, steering=orientation_diff*0.05)
 
-    def goto(self, point, speed=20.0):
+    def goto(self, point, speed=20.0, brake=True):
         x, y = point
         current_speed, _, _, current_position, current_orientation = self.getCarState()
 
@@ -201,11 +201,17 @@ class AirSimCarControl:
         target_orientation = np.rad2deg(target_orientation_rad)
 
         if distance <= 3 and current_speed < 1:
-            self.control(brake=1)
+            if brake:
+                self.control(brake=1)
+            return True
         elif distance > 0.1 * current_speed**2:
             self.drive(speed=target_speed, orientation=target_orientation)
+            return False
         else:
-            self.control(brake=1)
+            if brake:
+                self.control(brake=1)
+                return False
+            return True
 
 def getInitialPosition(name):
     settings_path = os.path.join(os.path.expanduser('~'), 'Documents', 'AirSim', 'settings.json')
