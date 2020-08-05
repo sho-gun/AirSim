@@ -101,6 +101,9 @@ class AirSimClient:
     def getCarState(self, name):
         return self._client.getCarState(name)
 
+    def getCollisionInfo(self, name):
+        return self._client.simGetCollisionInfo(name)
+
     def getGroundTruthState(self, name):
         return self._client.simGetGroundTruthKinematics(name)
 
@@ -142,6 +145,10 @@ class AirSimCarControl:
 
         return state.speed, state.gear, state.handbrake, position_dict, orientation
 
+    def getCollisionInfo(self):
+        collision_info = self.client.getCollisionInfo(self.name)
+        return collision_info.has_collided
+
     def control(self, throttle=0, steering=0, brake=0, gear=None):
         self.controls.throttle = throttle
         self.controls.steering = steering
@@ -159,7 +166,9 @@ class AirSimCarControl:
     def saveImage(self, name, save_path):
         image = self.client.simGetImage(name, airsim.ImageType.Scene)
         # image = self.effector.apply(image)
-        Thread(target=self.threadedSaveImage, args=(image, save_path)).start()
+        # Thread(target=self.threadedSaveImage, args=(image, save_path)).start()
+        with open(save_path, 'wb') as output:
+            output.write(image)
 
     def threadedSaveImage(self, image, save_path):
         # image = self.effector.apply(image)
@@ -182,6 +191,10 @@ class AirSimCarControl:
         self.control(throttle=throttle, steering=orientation_diff*0.05)
 
     def goto(self, point, speed=20.0, brake=True):
+        if self.getCollisionInfo():
+            self.control(brake=1)
+            return False
+
         x, y = point
         current_speed, _, _, current_position, current_orientation = self.getCarState()
 

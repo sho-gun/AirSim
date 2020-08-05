@@ -5,6 +5,7 @@ import sys
 import numpy as np
 from PIL import Image
 from math import sqrt
+from natsort import natsorted
 
 class FisheyeEffector:
     def __init__(self, height=720, width=1280, distortion=0.5):
@@ -99,7 +100,7 @@ if __name__ == '__main__':
         output_dir = 'output'
         os.makedirs(output_dir, exist_ok=True)
 
-        for idx, file in enumerate(os.listdir(input_path)):
+        for idx, file in enumerate(natsorted(os.listdir(input_path))):
             image_path = os.path.join(input_path, file)
             output_path = os.path.join(output_dir, str(idx) + '.png')
 
