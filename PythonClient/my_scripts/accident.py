@@ -150,9 +150,9 @@ class RouteManager:
 
             if self.random:
                 random_value = random.random() * 2 - 1 # between -1 and 1
-                x += random_value * 0.5
-                y += random_value * 0.5
-                speed += random_value * 5
+                x += random_value * 0.3
+                y += random_value * 0.3
+                speed += random_value * 1
 
             arrived = self.car.goto(
                 (x, y),
@@ -171,7 +171,7 @@ def main():
     car1 = AirSimCarControl('Car1')
     car2 = AirSimCarControl('Car2')
 
-    car1_route = RouteManager(car1, route='right', random=True)
+    car1_route = RouteManager(car1, route='straight', random=True)
     car2_route = RouteManager(car2, route='straight', random=True)
 
     while True:
