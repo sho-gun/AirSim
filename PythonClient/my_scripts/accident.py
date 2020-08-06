@@ -150,8 +150,8 @@ class RouteManager:
 
             if self.random:
                 random_value = random.random() * 2 - 1 # between -1 and 1
-                x += random_value * 0.3
-                y += random_value * 0.3
+                x += random_value * 0.1
+                y += random_value * 0.1
                 speed += random_value * 1
 
             arrived = self.car.goto(
