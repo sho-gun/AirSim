@@ -172,7 +172,7 @@ def main():
     car2 = AirSimCarControl('Car2')
 
     car1_route = RouteManager(car1, route='straight', random=True)
-    car2_route = RouteManager(car2, route='straight', random=True)
+    car2_route = RouteManager(car2, route='left', random=True)
 
     while True:
         # Print state of the car
