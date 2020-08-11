@@ -1,3 +1,4 @@
+import sys
 import os
 import time
 import random
@@ -83,7 +84,7 @@ class RouteManager:
 
     speeds = {
         'straight': [5, 30],
-        'left': [9, 30, 8, 30],
+        'left': [7, 30, 8, 30],
         'right': [30, 12, 16, 30]
     }
 
@@ -163,7 +164,7 @@ class RouteManager:
             if arrived:
                 self.idx += 1
 
-def main():
+def main(car1_route, car2_route):
     dirname = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
     os.makedirs(dirname, exist_ok=True)
     idx = 0
@@ -171,8 +172,8 @@ def main():
     car1 = AirSimCarControl('Car1')
     car2 = AirSimCarControl('Car2')
 
-    car1_route = RouteManager(car1, route='straight', random=True)
-    car2_route = RouteManager(car2, route='left', random=True)
+    car1_route = RouteManager(car1, route=car1_route, random=True)
+    car2_route = RouteManager(car2, route=car2_route, random=True)
 
     while True:
         # Print state of the car
@@ -189,4 +190,16 @@ def main():
         time.sleep(0.1)
 
 if __name__ == '__main__':
-    main()
+    car1_route = 'straight'
+    car2_route = 'straight'
+
+    args = sys.argv
+    if len(args) > 1:
+        if args[1] in ['straight', 'left', 'right']:
+            car1_route = args[1]
+
+    if len(args) > 2:
+        if args[2] in ['straight', 'left', 'right']:
+            car2_route = args[2]
+
+    main(car1_route, car2_route)
