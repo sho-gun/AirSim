@@ -94,10 +94,11 @@ class RouteManager:
         'right': [True, False, False, True]
     }
 
-    def __init__(self, car, route='straight', random=False):
+    def __init__(self, car, route='straight', random=False, moderated=False):
         self.car = car
         self.idx = 0
         self.random = random
+        self.moderated = moderated
 
         _, _, _, initial_position, _ = self.car.getCarState()
         initial_direction = 'north'
@@ -141,7 +142,10 @@ class RouteManager:
 
         control_list['speeds'] = self.speeds[route]
         if self.random:
-            control_list['speeds'] = [speed + (random.random() * 2 - 1) * 2 for speed in control_list['speeds']]
+            if self.moderated:
+                control_list['speeds'] = [speed + (random.random() * 2 - 1) * 0.2 for speed in control_list['speeds']]
+            else:
+                control_list['speeds'] = [speed + (random.random() * 2 - 1) * 2 for speed in control_list['speeds']]
 
         control_list['brakes'] = self.brakes[route]
 
@@ -154,6 +158,9 @@ class RouteManager:
 
             if self.random:
                 random_value = random.random() * 2 - 1 # between -1 and 1
+                if self.moderated:
+                    random_value = random_value * 0.1
+
                 x += random_value * 0.1
                 y += random_value * 0.1
                 speed += random_value * 1
@@ -175,8 +182,12 @@ def main(car1_route, car2_route):
     car1 = AirSimCarControl('Car1')
     car2 = AirSimCarControl('Car2')
 
-    car1_route = RouteManager(car1, route=car1_route, random=True)
-    car2_route = RouteManager(car2, route=car2_route, random=True)
+    moderated = False
+    if car1_route == car2_route and car1_route == 'straight':
+        moderated = True
+
+    car1_route = RouteManager(car1, route=car1_route, random=True, moderated=moderated)
+    car2_route = RouteManager(car2, route=car2_route, random=True, moderated=moderated)
 
     while True:
         # Print state of the car
