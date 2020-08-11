@@ -140,6 +140,9 @@ class RouteManager:
             ]
 
         control_list['speeds'] = self.speeds[route]
+        if self.random:
+            control_list['speeds'] = [speed + (random.random() * 2 - 1) * 2 for speed in control_list['speeds']]
+
         control_list['brakes'] = self.brakes[route]
 
         return control_list
