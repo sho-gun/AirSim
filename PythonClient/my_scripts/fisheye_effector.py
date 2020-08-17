@@ -5,7 +5,6 @@ import sys
 import numpy as np
 from PIL import Image
 from math import sqrt
-from natsort import natsorted
 
 class FisheyeEffector:
     def __init__(self, height=720, width=1280, distortion=0.5):
@@ -70,6 +69,33 @@ def calc_points_of_original_image(x, y, r, distortion):
 
     return x / (1 - distortion*(r**2)), y / (1 - distortion*(r**2))
 
+def execDir(effector, path):
+    for file in os.listdir(path):
+        joined_path = os.path.join(path, file)
+
+        if os.path.isfile(joined_path):
+            _, ext = os.path.splitext(joined_path)
+            output_path = joined_path.replace(ext, '_fish.png')
+            execFile(effector, joined_path, output_path=output_path)
+
+        else:
+            execDir(effector, joined_path)
+
+def execFile(effector, input_path, output_path='output.png'):
+    if input_path.endswith('_fish.png'):
+        print('skip', input_path)
+        return
+
+    if os.path.exists(output_path):
+        print('skip', input_path)
+        return
+
+    with open(input_path, 'rb') as image_bin:
+        print(input_path)
+        output = open(output_path, 'wb')
+        output.write(effector.apply(image_bin.read()))
+        output.close()
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
@@ -91,21 +117,7 @@ if __name__ == '__main__':
     effector = FisheyeEffector(height=height, width=width, distortion=distortion)
 
     if os.path.isfile(input_path):
-        with open(input_path, 'rb') as image_bin:
-            output = open('output.png', 'wb')
-            output.write(effector.apply(image_bin.read()))
-            output.close()
+        execFile(effector, input_path)
 
     else:
-        output_dir = 'output'
-        os.makedirs(output_dir, exist_ok=True)
-
-        for idx, file in enumerate(natsorted(os.listdir(input_path))):
-            image_path = os.path.join(input_path, file)
-            output_path = os.path.join(output_dir, str(idx) + '.png')
-
-            if os.path.isfile(image_path):
-                with open(image_path, 'rb') as image_bin:
-                    output = open(output_path, 'wb')
-                    output.write(effector.apply(image_bin.read()))
-                    output.close()
+        execDir(effector, input_path)
